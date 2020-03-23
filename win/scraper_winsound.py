@@ -3,21 +3,26 @@
 
 import requests
 import bs4
+import winsound
 import re
 
 base_url = 'https://news.naver.com/main/list.nhn?mode=LSD&mid=sec&sid1=100'
 search_list = ['백신', '치료제', 'vaccine', 'Vaccine', 'remedy', 'Remedy', '총선']
 
+def playAudio():
+    winsound.PlaySound('sound.wav', winsound.SND_FILENAME)
+
 def scrap():
     resp = requests.get(base_url)
+
     resp.raise_for_status()
     resp.encoding='euc-kr'
     soup = bs4.BeautifulSoup(resp.text, "html.parser")
 
-    all_ul = soup.find("ul", {"class":"type06_headline"})
-    all = all_ul.find_all("li")
+    all = soup.find("ul", {"class":"type06_headline"})
+    all2 = all.find_all("li")
 
-    for item in all:
+    for item in all2:
         try:
             #img = item.find("dt", {"class":"photo"})
             #img2 = img.find("img")["src"]
@@ -39,5 +44,5 @@ def scrap():
         except:
             print("No image")
 
-
 scrap()
+playAudio()
