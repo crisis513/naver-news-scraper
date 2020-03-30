@@ -1,65 +1,20 @@
 #!/usr/bin/python
 #-*- coding: utf-8 -*-
 
-from config import config
-from flask import Flask, render_template, redirect, url_for, request
-from logging.handlers import RotatingFileHandler
-from time import sleep
-import os
-import logging
 import requests
-import threading
+import sys
 import urllib
 import json
 import bs4
 import re
-import sys
+from time import sleep
+from config import config
+from flask import Flask, render_template, redirect, url_for, request
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
-app = Flask(__name__)
-
-LOG_FILENAME = 'server.log'
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/oauth')
-def oauth():
-    code = str(request.args.get('code'))
-    res_token = get_token(app.config['RESTAPI_KEY'], str(code))
-    
-    f_a = open('filedb/access_token', 'wt')
-    f_a.write(res_token['access_token'])
-    f_a.close()
-
-    f_r = open('filedb/refresh_token', 'wt')
-    f_r.write(res_token['refresh_token'])
-    f_r.close()
-
-    return "success! \n\n" + str(res_token)
-
-@app.route('/goto')
-def goto():
-    url = str(request.args.get('goto'))
-    return redirect(url, code=200)
-    
-def get_token(client_id, code): 
-    url = "https://kauth.kakao.com/oauth/token"
-    payload = "grant_type=authorization_code"
-    payload += "&client_id=" + client_id
-    payload += "&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Foauth&code=" + code
-    headers = {
-        'Content-Type': "application/x-www-form-urlencoded",
-        'Cache-Control': "no-cache",
-    }
-
-    response = requests.request("POST", url, data=payload, headers=headers)
-    response_json = json.loads(((response.text).encode('utf-8')))
-    return response_json 
-
-def send_text(access_token, title, body, link):
+        
+def send_text(access_token, title, body, link) :
     url = 'https://kapi.kakao.com/v2/api/talk/memo/default/send'
     payload_dict = dict({
         "object_type": "feed",
@@ -74,7 +29,7 @@ def send_text(access_token, title, body, link):
         },
         "buttons":[
             {
-                "title": "Redirect Page",
+                "title": "웹으로 보기",
                 "link": {
                     "mobile_web_url": link,
                     "web_url": link
@@ -82,6 +37,7 @@ def send_text(access_token, title, body, link):
             }
         ]
     })
+
     
     payload = 'template_object=' + str(json.dumps(payload_dict))
     headers = {
@@ -122,7 +78,7 @@ def scrap():
                 f_a = open('filedb/access_token', 'rt')
                 # if not f_a.read().strip():
                 #     return "Can't read access_token!"
-                result = send_text(f_a.read(), str(title), str(body), "link")
+                result = send_text(f_a.read(), title, body, link)
                 print(result)
                 f_a.close()
 
@@ -132,29 +88,35 @@ def scrap():
                 print("Time: " + time)
                 print("\n")
 
+                return "Success scrap()!"
 
-def scraper_thread(name, sec):
-    while True:
-        sleep(sec)
-        scrap()
-        
-
-def create_app(config_name):
-    app.config.from_object(config[config_name])
-    config[config_name].init_app(app)
-    return app
-
+app = Flask(__name__)
 
 if __name__ == '__main__':
-    formatter = logging.Formatter(
-        "[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
-    handler = RotatingFileHandler(LOG_FILENAME, maxBytes=10000000, backupCount=5)
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(formatter)
-    app.logger.addHandler(handler)
+    app.config.from_object(config['default'])
+    config['default'].init_app(app)
 
-    t = threading.Thread(target=scraper_thread, args=("NN-SCRAPER Thread", 20))
-    t.start()
+    while True:
+        sleep(10)
+        result = scrap()
+        print(result)
 
-    app = create_app('default')
-    app.run(port=5000, debug=True)
+# # url = 'https://kauth.kakao.com/oauth/authorize?client_id=e8f06640b658cef3568974ad6438343a&redirect_uri=http://localhost:5000/oauth&response_type=code&scope=talk_message'
+# url = 'https://kauth.kakao.com/oauth/token'
+# headers = {
+#     'Content-Type': "application/x-www-form-urlencoded",
+#     'Cache-Control': "no-cache",
+# }
+# data = dict({
+#     'grant_type': 'refresh_token', 
+#     'client_id': 'e8f06640b658cef3568974ad6438343a', 
+#     'refresh_token': 's-duBiRHMJljhCiIev6OYJ7K5MbcbISc_tedfwo9c5sAAAFxFiQOJw',
+# })
+
+# resp = requests.post(url, headers=headers, data=data)
+
+# resp_json = json.loads(((resp.text).encode('utf-8')))
+# print(resp_json['access_token'])
+# # print("response status:\n%d" % resp.status_code)
+# # print("response headers:\n%s" % resp.headers)
+# # print("response body:\n%s" % resp.json)
