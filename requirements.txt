@@ -1,6 +1,8 @@
+APScheduler==3.6.3
 beautifulsoup4==4.8.2
 Flask==1.1.1
 Jinja2==2.11.1
+python-telegram-bot==12.5.1
 requests==2.23.0
 soupsieve==1.9.5
 urllib3==1.25.8
