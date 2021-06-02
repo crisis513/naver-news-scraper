@@ -5,4 +5,4 @@ Jinja2==2.11.1
 python-telegram-bot==12.5.1
 requests==2.23.0
 soupsieve==1.9.5
-urllib3==1.25.8
+urllib3==1.26.5
